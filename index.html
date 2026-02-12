@@ -1,9 +1,3 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/index.html b/index.html
-index c30593e13c6b6ba6a778a0b46248abe963effdb6..268d5344d069a02aa17ee1a4cefa9daf7c3b9d20 100644
---- a/index.html
-+++ b/index.html
-@@ -1,298 +1,223 @@
  <!doctype html>
  <html lang="en">
    <head>
@@ -20,74 +14,86 @@ index c30593e13c6b6ba6a778a0b46248abe963effdb6..268d5344d069a02aa17ee1a4cefa9daf
 -        --muted: #9ca3af;
 -        --border: #2a3140;
 -        --accent: #10a37f;
-+        --bg: #fff9f0;
-+        --text: #2a1f10;
-+        --muted: #755c3a;
-+        --card: #ffffff;
-+        --border: #f2d9b3;
-+        --accent: #ff9f1c;
-+        --accent-2: #ffbf69;
++        --bg: #f5faff;
++        --text: #1f2937;
++        --muted: #64748b;
++        --line: #d7e9ff;
++        --brand: #7cc4ff;
++        --brand-dark: #54afff;
++        --btn-bg: #eef6ff;
        }
  
        * { box-sizing: border-box; }
  
        body {
          margin: 0;
-         font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+-        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 -        background: var(--bg);
++        font-family: Arial, Helvetica, sans-serif;
          color: var(--text);
--      }
--
++        background: var(--bg);
+       }
+ 
 -      .layout {
-+        background: radial-gradient(circle at top, #fff4e2 0%, var(--bg) 50%);
++      .page {
          min-height: 100vh;
 -        display: grid;
 -        grid-template-columns: 260px 1fr;
-       }
- 
+-      }
+-
 -      .sidebar {
 -        border-right: 1px solid var(--border);
 -        background: #0c0e12;
 -        padding: 16px;
-+      .wrap {
-+        max-width: 960px;
-+        margin: 0 auto;
-+        padding: 28px 20px 48px;
++        display: flex;
++        flex-direction: column;
        }
  
-       .brand {
--        display: flex;
-+        display: inline-flex;
+-      .brand {
++      .center {
++        flex: 1;
+         display: flex;
          align-items: center;
-         gap: 10px;
+-        gap: 10px;
 -        font-weight: 600;
 -        padding: 10px;
 -        border: 1px solid var(--border);
 -        border-radius: 10px;
 -        background: #12151d;
--      }
--
++        justify-content: center;
++        padding: 24px;
+       }
+ 
 -      .dot {
 -        width: 10px;
 -        height: 10px;
 -        border-radius: 999px;
 -        background: var(--accent);
 -        box-shadow: 0 0 12px rgba(16, 163, 127, 0.8);
--      }
--
++      .search-shell {
++        width: min(760px, 100%);
+       }
+ 
 -      .new-chat {
 -        width: 100%;
 -        margin-top: 14px;
 -        background: #161b23;
 -        color: var(--text);
-+        background: #fff;
-         border: 1px solid var(--border);
+-        border: 1px solid var(--border);
 -        border-radius: 10px;
 -        padding: 11px 12px;
 -        text-align: left;
 -        font-size: 14px;
--      }
--
++      .logo {
++        text-align: center;
++        font-size: clamp(56px, 11vw, 94px);
++        font-weight: 700;
++        letter-spacing: -0.02em;
++        color: var(--brand);
++        margin-bottom: 22px;
++        user-select: none;
+       }
+ 
 -      .nav-label {
 -        color: var(--muted);
 -        font-size: 12px;
@@ -95,43 +101,69 @@ index c30593e13c6b6ba6a778a0b46248abe963effdb6..268d5344d069a02aa17ee1a4cefa9daf
 -        letter-spacing: 0.08em;
 -        margin: 18px 8px 8px;
 -      }
--
++      .logo span { color: var(--brand-dark); }
+ 
 -      .nav-item {
 -        padding: 10px;
 -        border-radius: 8px;
 -        color: #d4d9e2;
 -        font-size: 14px;
--      }
--
++      .search-wrap {
++        border: 1px solid var(--line);
++        background: #fff;
++        border-radius: 999px;
++        padding: 6px 8px 6px 18px;
++        display: flex;
++        align-items: center;
++        gap: 10px;
++        box-shadow: 0 2px 10px rgba(66, 153, 225, 0.08);
+       }
+ 
 -      .nav-item.active { background: #202635; }
 -
 -      .main {
 -        display: grid;
 -        grid-template-rows: auto 1fr auto;
--      }
--
++      .search-wrap:focus-within {
++        border-color: var(--brand);
++        box-shadow: 0 4px 16px rgba(66, 153, 225, 0.22);
+       }
+ 
 -      .topbar {
 -        border-bottom: 1px solid var(--border);
 -        padding: 14px 22px;
 -        display: flex;
 -        justify-content: space-between;
 -        align-items: center;
--      }
--
++      input[type="search"] {
++        flex: 1;
++        border: 0;
++        outline: none;
++        font-size: 18px;
++        padding: 10px 4px;
++        color: var(--text);
+       }
+ 
 -      .top-title {
 -        font-size: 14px;
--        color: var(--muted);
--      }
--
++      .search-icon {
+         color: var(--muted);
++        font-size: 15px;
+       }
+ 
 -      .pill {
 -        font-size: 12px;
 -        color: #b7f4e5;
 -        border: 1px solid #24594d;
 -        background: #133128;
-         border-radius: 999px;
+-        border-radius: 999px;
 -        padding: 5px 10px;
-+        padding: 8px 14px;
-+        font-weight: 700;
++      .actions {
++        margin-top: 20px;
++        display: flex;
++        justify-content: center;
++        gap: 12px;
++        flex-wrap: wrap;
        }
  
 -      .chat {
@@ -139,46 +171,48 @@ index c30593e13c6b6ba6a778a0b46248abe963effdb6..268d5344d069a02aa17ee1a4cefa9daf
 -        width: 100%;
 -        margin: 0 auto;
 -        padding: 28px 20px;
-+      .logo {
-+        width: 18px;
-+        height: 18px;
-+        border-radius: 50%;
-+        background: linear-gradient(135deg, var(--accent), #ff5e5b);
++      button {
++        border: 1px solid var(--line);
++        background: var(--btn-bg);
++        color: #2563eb;
++        border-radius: 8px;
++        padding: 10px 16px;
++        font-size: 14px;
++        cursor: pointer;
        }
  
-       .hero {
-         text-align: center;
+-      .hero {
+-        text-align: center;
 -        margin-top: 42px;
 -        margin-bottom: 32px;
-+        margin: 42px 0 28px;
++      button:hover {
++        border-color: #b5d9ff;
++        background: #e6f2ff;
        }
  
 -      .hero h1 {
-+      h1 {
-         margin: 0;
+-        margin: 0;
 -        font-size: clamp(28px, 4vw, 44px);
-+        font-size: clamp(36px, 5vw, 62px);
-         letter-spacing: -0.03em;
+-        letter-spacing: -0.03em;
++      .results {
++        width: min(860px, 100%);
++        margin: 30px auto 40px;
++        padding: 0 24px;
++        display: none;
        }
  
-       .hero p {
-         margin-top: 10px;
+-      .hero p {
+-        margin-top: 10px;
++      .meta {
          color: var(--muted);
-       }
- 
+-      }
+-
 -      .message {
-+      .search-box {
-+        background: var(--card);
-         border: 1px solid var(--border);
+-        border: 1px solid var(--border);
 -        border-radius: 14px;
 -        background: var(--panel);
 -        padding: 16px;
--        margin-bottom: 14px;
-+        border-radius: 16px;
-+        padding: 12px;
-+        box-shadow: 0 10px 20px rgba(255, 159, 28, 0.1);
-+        display: flex;
-+        gap: 10px;
+         margin-bottom: 14px;
        }
  
 -      .message pre {
@@ -186,51 +220,32 @@ index c30593e13c6b6ba6a778a0b46248abe963effdb6..268d5344d069a02aa17ee1a4cefa9daf
 -        white-space: pre-wrap;
 -        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 -        color: #d8dfeb;
-+      input {
-+        flex: 1;
-+        border: 0;
-+        font-size: 18px;
-+        padding: 10px;
-+        outline: none;
-+        color: var(--text);
-       }
- 
+-      }
+-
 -      .composer-wrap {
 -        border-top: 1px solid var(--border);
 -        background: rgba(12,14,18,0.75);
 -        backdrop-filter: blur(6px);
 -        padding: 16px 20px 20px;
-+      button {
-+        border: 0;
++      .result {
++        background: #fff;
++        border: 1px solid #e4f0ff;
 +        border-radius: 12px;
-+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
-+        color: #3f2500;
-+        font-weight: 700;
-+        padding: 0 20px;
-+        cursor: pointer;
++        padding: 14px 16px;
++        margin-bottom: 10px;
        }
  
 -      .composer {
 -        max-width: 900px;
 -        margin: 0 auto;
-+      .meta {
-+        color: var(--muted);
-+        margin: 14px 2px;
-+        font-size: 14px;
-+      }
-+
-+      .results {
-+        display: grid;
-+        gap: 12px;
-+      }
-+
-+      .result {
-+        background: var(--card);
-         border: 1px solid var(--border);
-         border-radius: 14px;
+-        border: 1px solid var(--border);
+-        border-radius: 14px;
 -        background: var(--panel-2);
 -        padding: 10px;
-+        padding: 14px;
++      .result a {
++        color: #1d4ed8;
++        font-size: 20px;
++        text-decoration: none;
        }
  
 -      textarea {
@@ -244,27 +259,25 @@ index c30593e13c6b6ba6a778a0b46248abe963effdb6..268d5344d069a02aa17ee1a4cefa9daf
 -        font-size: 16px;
 -        outline: none;
 -        font-family: inherit;
-+      .result a {
-+        color: #9b4d00;
-+        text-decoration: none;
-+        font-weight: 600;
-       }
+-      }
++      .result a:hover { text-decoration: underline; }
  
 -      .composer-actions {
 -        display: flex;
 -        justify-content: space-between;
 -        align-items: center;
 -        margin-top: 8px;
-+      .result a:hover {
-+        text-decoration: underline;
++      .result p {
++        margin: 7px 0;
++        line-height: 1.45;
        }
  
 -      .status {
 -        color: var(--muted);
--        font-size: 13px;
-+      .result p {
-+        margin: 8px 0;
-+        line-height: 1.5;
++      .url {
++        color: #0f766e;
+         font-size: 13px;
++        word-break: break-word;
        }
  
 -      .send {
@@ -274,21 +287,18 @@ index c30593e13c6b6ba6a778a0b46248abe963effdb6..268d5344d069a02aa17ee1a4cefa9daf
 -        font-weight: 700;
 -        border-radius: 9px;
 -        padding: 8px 14px;
-+      .url {
-+        color: var(--muted);
-+        font-size: 13px;
-+        word-break: break-all;
-       }
- 
+-      }
+-
 -      .send:disabled { opacity: 0.7; }
 -
 -      @media (max-width: 900px) {
 -        .layout { grid-template-columns: 1fr; }
 -        .sidebar { display: none; }
-+      .empty {
++      footer {
 +        text-align: center;
 +        color: var(--muted);
-+        margin-top: 40px;
++        font-size: 12px;
++        padding: 16px;
        }
      </style>
    </head>
@@ -323,25 +333,31 @@ index c30593e13c6b6ba6a778a0b46248abe963effdb6..268d5344d069a02aa17ee1a4cefa9daf
 -            <div class="composer-actions">
 -              <span class="status" id="status">Ready.</span>
 -              <button class="send" id="ask-button" type="submit">Generate</button>
--            </div>
--          </form>
++    <div class="page">
++      <main class="center">
++        <section class="search-shell">
++          <div class="logo">Happy<span>search</span></div>
++          <form id="searchForm">
++            <div class="search-wrap">
++              <span class="search-icon">🔎</span>
++              <input id="query" type="search" name="q" placeholder="Search Happysearch" autocomplete="off" required />
++            </div>
++            <div class="actions">
++              <button type="submit">Happy Search</button>
++              <button id="luckyBtn" type="button">I'm Feeling Happy</button>
+             </div>
+           </form>
 -        </footer>
--      </main>
--    </div>
-+    <main class="wrap">
-+      <div class="brand"><span class="logo"></span> Happysearch</div>
-+      <section class="hero">
-+        <h1>Happysearch</h1>
-+        <p>Search with a smile. Instant answers from Wikipedia plus web shortcuts.</p>
++        </section>
+       </main>
++
++      <section id="results" class="results">
++        <div id="meta" class="meta"></div>
++        <div id="list"></div>
 +      </section>
-+      <form id="searchForm" class="search-box">
-+        <input id="query" name="q" placeholder="Search Happysearch..." autocomplete="off" required />
-+        <button type="submit">Search</button>
-+      </form>
-+      <div id="meta" class="meta"></div>
-+      <section id="results" class="results"></section>
-+      <p id="empty" class="empty">Try searching for something fun like “black holes” or “jazz history”.</p>
-+    </main>
++
++      <footer>Happysearch • the light-blue friendly search page</footer>
+     </div>
  
      <script>
 -      const promptEl = document.getElementById("prompt");
@@ -358,9 +374,10 @@ index c30593e13c6b6ba6a778a0b46248abe963effdb6..268d5344d069a02aa17ee1a4cefa9daf
 -          statusEl.textContent = "Please enter a coding prompt.";
 +      const form = document.getElementById('searchForm');
 +      const queryInput = document.getElementById('query');
-+      const meta = document.getElementById('meta');
++      const luckyBtn = document.getElementById('luckyBtn');
 +      const results = document.getElementById('results');
-+      const empty = document.getElementById('empty');
++      const meta = document.getElementById('meta');
++      const list = document.getElementById('list');
 +
 +      function escapeHtml(text) {
 +        const div = document.createElement('div');
@@ -368,83 +385,94 @@ index c30593e13c6b6ba6a778a0b46248abe963effdb6..268d5344d069a02aa17ee1a4cefa9daf
 +        return div.innerHTML;
 +      }
 +
-+      function renderResults(payload, query) {
-+        results.innerHTML = '';
++      function renderResults(payload) {
++        list.innerHTML = '';
++        results.style.display = 'block';
++
 +        const total = payload.results.length;
-+        meta.textContent = total
-+          ? `${total} result${total === 1 ? '' : 's'} for "${query}" in ${payload.elapsed_ms} ms`
-+          : `No results for "${query}"`;
++        meta.textContent = `${total} result${total === 1 ? '' : 's'} in ${payload.elapsed_ms} ms`;
 +
 +        if (!total) {
-+          empty.style.display = 'block';
++          list.innerHTML = '<div class="result"><p>No results found.</p></div>';
            return;
          }
  
 -        buttonEl.disabled = true;
 -        statusEl.textContent = "Thinking...";
 -        answerEl.textContent = "";
-+        empty.style.display = 'none';
 +        payload.results.forEach((item) => {
 +          const article = document.createElement('article');
 +          article.className = 'result';
 +          article.innerHTML = `
 +            <a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">${escapeHtml(item.title)}</a>
-+            <p>${escapeHtml(item.snippet || 'No summary available.')}</p>
++            <p>${escapeHtml(item.snippet || 'No description available.')}</p>
 +            <div class="url">${escapeHtml(item.url)}</div>
 +          `;
-+          results.appendChild(article);
++          list.appendChild(article);
 +        });
 +      }
-+
-+      form.addEventListener('submit', async (event) => {
-+        event.preventDefault();
-+        const q = queryInput.value.trim();
-+        if (!q) return;
-+
-+        meta.textContent = 'Searching...';
-+        empty.style.display = 'none';
-+        results.innerHTML = '';
  
-         try {
+-        try {
 -          const response = await fetch("/api/ask", {
 -            method: "POST",
 -            headers: { "Content-Type": "application/json" },
 -            body: JSON.stringify({ prompt })
 -          });
-+          const response = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-           const payload = await response.json();
-+
-           if (!response.ok) {
+-          const payload = await response.json();
+-          if (!response.ok) {
 -            throw new Error(payload.error || "Request failed");
-+            throw new Error(payload.error || 'Search failed.');
-           }
+-          }
 -          answerEl.textContent = payload.answer;
 -          statusEl.textContent = "Done.";
-+
-+          renderResults(payload, q);
-         } catch (error) {
+-        } catch (error) {
 -          statusEl.textContent = "Request failed.";
 -          answerEl.textContent = `Error: ${error.message}`;
 -        } finally {
 -          buttonEl.disabled = false;
-+          meta.textContent = '';
-+          empty.style.display = 'block';
-+          empty.textContent = error.message;
++      async function runSearch() {
++        const q = queryInput.value.trim();
++        if (!q) return null;
++
++        meta.textContent = 'Searching...';
++        list.innerHTML = '';
++        results.style.display = 'block';
++
++        const response = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
++        const payload = await response.json();
++        if (!response.ok) {
++          throw new Error(payload.error || 'Search failed.');
          }
--      }
--
++        renderResults(payload);
++        return payload;
+       }
+ 
 -      function resetChat() {
 -        promptEl.value = "";
 -        answerEl.textContent = "Your coding answer will appear here.";
 -        statusEl.textContent = "Ready.";
 -      }
--
++      form.addEventListener('submit', async (event) => {
++        event.preventDefault();
++        try {
++          await runSearch();
++        } catch (error) {
++          meta.textContent = error.message;
++          list.innerHTML = '';
++        }
++      });
+ 
 -      formEl.addEventListener("submit", askCodexLite);
 -      newChatEl.addEventListener("click", resetChat);
++      luckyBtn.addEventListener('click', async () => {
++        try {
++          const payload = await runSearch();
++          if (payload && payload.results.length > 0) {
++            window.open(payload.results[0].url, '_blank', 'noopener,noreferrer');
++          }
++        } catch (error) {
++          meta.textContent = error.message;
++        }
 +      });
      </script>
    </body>
  </html>
- 
-EOF
-)
