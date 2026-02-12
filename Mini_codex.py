@@ -68,6 +68,45 @@ class CodexLite:
         self.config = config
         self.client = _get_openai_client()
 
+    def _responses_create(self, prompt: str, max_tokens: int, temperature: float) -> str:
+        """Call the Responses API with a stable input shape."""
+        response = self.client.responses.create(
+            model=self.config.model,
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+            input=[
+                {
+                    "role": "system",
+                    "content": [{"type": "input_text", "text": SYSTEM_PROMPT}],
+                },
+                {
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": prompt}],
+                },
+            ],
+        )
+        return response.output_text
+
+    def _chat_completions_create(self, prompt: str, max_tokens: int, temperature: float) -> str:
+        """Fallback path for SDKs that reject Responses payload patterns."""
+        completion = self.client.chat.completions.create(
+            model=self.config.model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return completion.choices[0].message.content or ""
+
+    def _model_call(self, prompt: str, max_tokens: int, temperature: float) -> str:
+        """Use Responses first; fallback to Chat Completions for compatibility."""
+        try:
+            return self._responses_create(prompt, max_tokens, temperature)
+        except Exception:
+            return self._chat_completions_create(prompt, max_tokens, temperature)
+
     def _offline_answer(self, user_input: str) -> str:
         return "\n".join(
             [
@@ -95,78 +134,44 @@ class CodexLite:
         if not self.client:
             return self._offline_answer(user_input)
 
-        plan = self.client.responses.create(
-            model=self.config.model,
-            temperature=self.config.temperature,
-            max_output_tokens=self.config.planning_tokens,
-            input=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": (
-                        "Create a concise implementation plan for this coding request. "
-                        "Include assumptions, test strategy, and likely edge cases.\n\n"
-                        f"Request: {user_input}"
-                    ),
-                },
-            ],
-        )
+        try:
+            plan_prompt = (
+                "Create a concise implementation plan for this coding request. "
+                "Include assumptions, test strategy, and likely edge cases.\n\n"
+                f"Request: {user_input}"
+            )
+            plan = self._model_call(plan_prompt, self.config.planning_tokens, self.config.temperature)
 
-        draft = self.client.responses.create(
-            model=self.config.model,
-            temperature=self.config.temperature,
-            max_output_tokens=self.config.max_tokens,
-            input=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": (
-                        f"User request: {user_input}\n\n"
-                        f"Implementation plan: {plan.output_text}\n\n"
-                        "Write the best possible answer for a coding user."
-                    ),
-                },
-            ],
-        )
+            draft_prompt = (
+                f"User request: {user_input}\n\n"
+                f"Implementation plan: {plan}\n\n"
+                "Write the best possible answer for a coding user."
+            )
+            draft = self._model_call(draft_prompt, self.config.max_tokens, self.config.temperature)
 
-        critique = self.client.responses.create(
-            model=self.config.model,
-            temperature=0.0,
-            max_output_tokens=self.config.critique_tokens,
-            input=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": (
-                        "Critique the draft answer for correctness, omissions, weak tests, "
-                        "and unclear assumptions. Return only actionable improvements.\n\n"
-                        f"User request: {user_input}\n\n"
-                        f"Draft answer: {draft.output_text}"
-                    ),
-                },
-            ],
-        )
+            critique_prompt = (
+                "Critique the draft answer for correctness, omissions, weak tests, "
+                "and unclear assumptions. Return only actionable improvements.\n\n"
+                f"User request: {user_input}\n\n"
+                f"Draft answer: {draft}"
+            )
+            critique = self._model_call(critique_prompt, self.config.critique_tokens, 0.0)
 
-        final = self.client.responses.create(
-            model=self.config.model,
-            temperature=self.config.temperature,
-            max_output_tokens=self.config.max_tokens,
-            input=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": (
-                        f"User request: {user_input}\n\n"
-                        f"Plan: {plan.output_text}\n\n"
-                        f"Draft: {draft.output_text}\n\n"
-                        f"Critique: {critique.output_text}\n\n"
-                        "Produce the improved final answer, incorporating critique fixes."
-                    ),
-                },
-            ],
-        )
-        return final.output_text
-
+            final_prompt = (
+                f"User request: {user_input}\n\n"
+                f"Plan: {plan}\n\n"
+                f"Draft: {draft}\n\n"
+                f"Critique: {critique}\n\n"
+                "Produce the improved final answer, incorporating critique fixes."
+            )
+            return self._model_call(final_prompt, self.config.max_tokens, self.config.temperature)
+        except Exception as exc:
+            return (
+                "I hit an OpenAI API compatibility issue while generating a response.\n"
+                f"Error: {exc}\n\n"
+                "Falling back to offline guidance:\n\n"
+                f"{self._offline_answer(user_input)}"
+            )
 
 class CodexLiteHandler(BaseHTTPRequestHandler):
     assistant: CodexLite | None = None
