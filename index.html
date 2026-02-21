@@ -1,259 +1,368 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Happysearch</title>
-    <style>
-      :root {
-        --bg: #ffffff;
-        --text: #202124;
-        --muted: #5f6368;
-        --line: #dfe1e5;
-        --line-strong: #d2d5da;
-        --brand-light: #7ec3ff;
-        --brand-dark: #3ba6ff;
-      }
 
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: Arial, Helvetica, sans-serif;
-        color: var(--text);
-        background: var(--bg);
-      }
-
-      .page {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .center {
-        flex: 1;
-        display: grid;
-        place-items: center;
-        padding: 24px;
-      }
-
-      .search-shell {
-        width: min(584px, 100%);
-      }
-
-      .logo {
-        text-align: center;
-        font-size: clamp(54px, 12vw, 90px);
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        color: var(--brand-light);
-        margin-bottom: 24px;
-        user-select: none;
-      }
-
-      .logo span {
-        color: var(--brand-dark);
-      }
-
-      .search-wrap {
-        border: 1px solid var(--line);
-        background: #fff;
-        border-radius: 24px;
-        padding: 0 14px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        min-height: 46px;
-      }
-
-      .search-wrap:hover,
-      .search-wrap:focus-within {
-        border-color: var(--line-strong);
-        box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
-      }
-
-      .search-icon {
-        color: #9aa0a6;
-        font-size: 14px;
-      }
-
-      input[type='search'] {
-        flex: 1;
-        border: 0;
-        outline: none;
-        font-size: 16px;
-        color: var(--text);
-        background: transparent;
-      }
-
-      .actions {
-        margin-top: 30px;
-        display: flex;
-        justify-content: center;
-      }
-
-      button {
-        border: 1px solid #f8f9fa;
-        background: #f8f9fa;
-        color: #3c4043;
-        border-radius: 4px;
-        padding: 0 16px;
-        height: 36px;
-        font-size: 14px;
-        cursor: pointer;
-      }
-
-      button:hover {
-        border-color: #dadce0;
-        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
-      }
-
-      .results {
-        width: min(760px, 100%);
-        margin: 18px auto 40px;
-        padding: 0 24px;
-        display: none;
-      }
-
-      .meta {
-        color: var(--muted);
-        font-size: 14px;
-        margin-bottom: 18px;
-      }
-
-      .result {
-        margin-bottom: 24px;
-      }
-
-      .result a {
-        color: #1a0dab;
-        font-size: 20px;
-        text-decoration: none;
-      }
-
-      .result a:hover {
-        text-decoration: underline;
-      }
-
-      .result p {
-        margin: 4px 0 0;
-        color: #4d5156;
-        line-height: 1.45;
-      }
-
-      .url {
-        color: #006621;
-        font-size: 14px;
-        margin-top: 2px;
-        word-break: break-word;
-      }
-
-      footer {
-        text-align: center;
-        color: var(--muted);
-        font-size: 12px;
-        padding: 16px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="page">
-      <main class="center">
-        <section class="search-shell">
-          <div class="logo">Happy<span>search</span></div>
-          <form id="searchForm">
-            <div class="search-wrap">
-              <span class="search-icon">🔎</span>
-              <input id="query" type="search" name="q" placeholder="Search Happysearch" autocomplete="off" required />
-            </div>
-            <div class="actions">
-              <button type="submit">Happy Search</button>
-            </div>
-          </form>
-        </section>
-      </main>
-
-      <section id="results" class="results">
-        <div id="meta" class="meta"></div>
-        <div id="list"></div>
-      </section>
-
-      <footer>Happysearch</footer>
-    </div>
-
-    <script>
-      const form = document.getElementById('searchForm');
-      const queryInput = document.getElementById('query');
-      const results = document.getElementById('results');
-      const meta = document.getElementById('meta');
-      const list = document.getElementById('list');
-
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      function renderResults(payload) {
-        list.innerHTML = '';
-        results.style.display = 'block';
-
-        const total = payload.results.length;
-        meta.textContent = `About ${total} result${total === 1 ? '' : 's'} (${payload.elapsed_ms} ms)`;
-
-        if (!total) {
-          list.innerHTML = '<div class="result"><p>No results found.</p></div>';
-          return;
-        }
-
-        payload.results.forEach((item) => {
-          const article = document.createElement('article');
-          article.className = 'result';
-          article.innerHTML = `
-            <a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">${escapeHtml(item.title)}</a>
-            <div class="url">${escapeHtml(item.url)}</div>
-            <p>${escapeHtml(item.snippet || 'No description available.')}</p>
-          `;
-          list.appendChild(article);
-        });
-      }
-
-      async function runSearch() {
-        const q = queryInput.value.trim();
-        if (!q) return;
-
-        meta.textContent = 'Searching...';
-        list.innerHTML = '';
-        results.style.display = 'block';
-
-        const response = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-        const raw = await response.text();
-
-        let payload;
-        try {
-          payload = JSON.parse(raw);
-        } catch (_error) {
-          throw new Error('Search failed: server returned invalid JSON.');
-        }
-
-        if (!response.ok) {
-          throw new Error(payload.error || 'Search failed.');
-        }
-
-        renderResults(payload);
-      }
-
-      form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        try {
-          await runSearch();
-        } catch (error) {
-          meta.textContent = error.message;
-          list.innerHTML = '';
-        }
-      });
-    </script>
-  </body>
-</html>
+ <!doctype html>
+ <html lang="en">
+   <head>
+     <meta charset="utf-8" />
+     <meta name="viewport" content="width=device-width, initial-scale=1" />
+-    <title>Happysearch</title>
++    <title>Pokemon GO Event Feed | Happysearch</title>
+     <style>
+       :root {
+-        --bg: #ffffff;
+-        --text: #202124;
+-        --muted: #5f6368;
+-        --line: #dfe1e5;
+-        --line-strong: #d2d5da;
+-        --brand-light: #7ec3ff;
+-        --brand-dark: #3ba6ff;
+-      }
+-
+-      * {
+-        box-sizing: border-box;
+-      }
+-
++        --bg: #0b101c;
++        --panel: #111a2e;
++        --card: #182540;
++        --text: #f5f7ff;
++        --muted: #97a5c4;
++        --line: #2d3c61;
++        --accent: #8de6fd;
++        --accent-2: #ffc53d;
++      }
++      * { box-sizing: border-box; }
+       body {
+         margin: 0;
+-        font-family: Arial, Helvetica, sans-serif;
++        font-family: Inter, Segoe UI, Arial, sans-serif;
+         color: var(--text);
+-        background: var(--bg);
+-      }
+-
+-      .page {
+-        min-height: 100vh;
+-        display: flex;
+-        flex-direction: column;
+-      }
+-
+-      .center {
+-        flex: 1;
+-        display: grid;
+-        place-items: center;
+-        padding: 24px;
+-      }
+-
+-      .search-shell {
+-        width: min(584px, 100%);
+-      }
+-
+-      .logo {
+-        text-align: center;
+-        font-size: clamp(54px, 12vw, 90px);
+-        font-weight: 700;
+-        letter-spacing: -0.02em;
+-        color: var(--brand-light);
+-        margin-bottom: 24px;
+-        user-select: none;
+-      }
+-
+-      .logo span {
+-        color: var(--brand-dark);
++        background: radial-gradient(circle at top, #16274d 0%, var(--bg) 55%);
+       }
+-
+-      .search-wrap {
++      .wrap { width: min(1080px, 100%); margin: 0 auto; padding: 24px; }
++      .hero {
++        background: linear-gradient(135deg, rgba(141, 230, 253, 0.2), rgba(255, 197, 61, 0.16));
+         border: 1px solid var(--line);
+-        background: #fff;
+-        border-radius: 24px;
+-        padding: 0 14px;
+-        display: flex;
+-        align-items: center;
+-        gap: 10px;
+-        min-height: 46px;
++        border-radius: 20px;
++        padding: 28px;
+       }
+-
+-      .search-wrap:hover,
+-      .search-wrap:focus-within {
+-        border-color: var(--line-strong);
+-        box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
+-      }
+-
+-      .search-icon {
+-        color: #9aa0a6;
+-        font-size: 14px;
+-      }
+-
+-      input[type='search'] {
+-        flex: 1;
+-        border: 0;
+-        outline: none;
+-        font-size: 16px;
+-        color: var(--text);
+-        background: transparent;
+-      }
+-
+-      .actions {
+-        margin-top: 30px;
+-        display: flex;
+-        justify-content: center;
+-      }
+-
++      h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 40px); }
++      .sub { margin: 0; color: var(--muted); max-width: 760px; line-height: 1.5; }
++      .controls { margin-top: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+       button {
+-        border: 1px solid #f8f9fa;
+-        background: #f8f9fa;
+-        color: #3c4043;
+-        border-radius: 4px;
+-        padding: 0 16px;
+-        height: 36px;
+-        font-size: 14px;
++        background: var(--accent);
++        border: 0;
++        color: #0f172a;
++        font-weight: 700;
++        padding: 10px 16px;
++        border-radius: 10px;
+         cursor: pointer;
+       }
+-
+-      button:hover {
+-        border-color: #dadce0;
+-        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+-      }
+-
+-      .results {
+-        width: min(760px, 100%);
+-        margin: 18px auto 40px;
+-        padding: 0 24px;
+-        display: none;
+-      }
+-
+-      .meta {
+-        color: var(--muted);
+-        font-size: 14px;
+-        margin-bottom: 18px;
+-      }
+-
+-      .result {
+-        margin-bottom: 24px;
+-      }
+-
+-      .result a {
+-        color: #1a0dab;
+-        font-size: 20px;
+-        text-decoration: none;
+-      }
+-
+-      .result a:hover {
+-        text-decoration: underline;
+-      }
+-
+-      .result p {
+-        margin: 4px 0 0;
+-        color: #4d5156;
+-        line-height: 1.45;
+-      }
+-
+-      .url {
+-        color: #006621;
+-        font-size: 14px;
+-        margin-top: 2px;
+-        word-break: break-word;
++      .meta { color: var(--muted); font-size: 14px; }
++      .grid {
++        margin-top: 24px;
++        display: grid;
++        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
++        gap: 14px;
+       }
+-
+-      footer {
+-        text-align: center;
+-        color: var(--muted);
+-        font-size: 12px;
++      .card {
++        border: 1px solid var(--line);
++        background: var(--card);
++        border-radius: 16px;
+         padding: 16px;
++        display: flex;
++        flex-direction: column;
++        gap: 8px;
+       }
++      .pill {
++        display: inline-block;
++        width: fit-content;
++        font-size: 12px;
++        font-weight: 700;
++        text-transform: uppercase;
++        letter-spacing: 0.05em;
++        color: #0f172a;
++        background: var(--accent-2);
++        padding: 4px 8px;
++        border-radius: 999px;
++      }
++      .card h2 { margin: 0; font-size: 20px; }
++      .card p { margin: 0; color: var(--muted); line-height: 1.45; }
++      .small { font-size: 13px; color: var(--muted); }
++      .card a { color: var(--accent); text-decoration: none; font-weight: 600; margin-top: auto; }
++      .card a:hover { text-decoration: underline; }
++      footer { text-align: center; color: var(--muted); font-size: 12px; padding: 22px; }
+     </style>
+   </head>
+   <body>
+-    <div class="page">
+-      <main class="center">
+-        <section class="search-shell">
+-          <div class="logo">Happy<span>search</span></div>
+-          <form id="searchForm">
+-            <div class="search-wrap">
+-              <span class="search-icon">🔎</span>
+-              <input id="query" type="search" name="q" placeholder="Search Happysearch" autocomplete="off" required />
+-            </div>
+-            <div class="actions">
+-              <button type="submit">Happy Search</button>
+-            </div>
+-          </form>
+-        </section>
+-      </main>
+-
+-      <section id="results" class="results">
+-        <div id="meta" class="meta"></div>
+-        <div id="list"></div>
++    <div class="wrap">
++      <section class="hero">
++        <h1>Pokemon GO Event Breakdown</h1>
++        <p class="sub">LeekDuck-style dashboard for active Pokemon GO news and events. The feed refreshes automatically each day and you can manually update anytime.</p>
++        <div class="controls">
++          <button id="refreshBtn" type="button">Refresh now</button>
++          <span id="meta" class="meta">Loading latest events…</span>
++        </div>
+       </section>
+ 
+-      <footer>Happysearch</footer>
++      <section id="grid" class="grid"></section>
+     </div>
++    <footer>Happysearch · Pokemon GO event tracker</footer>
+ 
+     <script>
+-      const form = document.getElementById('searchForm');
+-      const queryInput = document.getElementById('query');
+-      const results = document.getElementById('results');
++      const grid = document.getElementById('grid');
+       const meta = document.getElementById('meta');
+-      const list = document.getElementById('list');
++      const refreshBtn = document.getElementById('refreshBtn');
++      const DAY_MS = 24 * 60 * 60 * 1000;
++      const STORAGE_KEY = 'happysearch-last-refresh';
+ 
+       function escapeHtml(text) {
+         const div = document.createElement('div');
+         div.textContent = text;
+         return div.innerHTML;
+       }
+ 
+-      function renderResults(payload) {
+-        list.innerHTML = '';
+-        results.style.display = 'block';
+-
+-        const total = payload.results.length;
+-        meta.textContent = `About ${total} result${total === 1 ? '' : 's'} (${payload.elapsed_ms} ms)`;
++      function render(payload) {
++        const events = payload.events || [];
++        grid.innerHTML = '';
+ 
+-        if (!total) {
+-          list.innerHTML = '<div class="result"><p>No results found.</p></div>';
++        if (!events.length) {
++          grid.innerHTML = '<article class="card"><h2>No events found</h2><p>Try refreshing in a moment.</p></article>';
+           return;
+         }
+ 
+-        payload.results.forEach((item) => {
+-          const article = document.createElement('article');
+-          article.className = 'result';
+-          article.innerHTML = `
+-            <a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">${escapeHtml(item.title)}</a>
+-            <div class="url">${escapeHtml(item.url)}</div>
+-            <p>${escapeHtml(item.snippet || 'No description available.')}</p>
++        events.forEach((event) => {
++          const card = document.createElement('article');
++          card.className = 'card';
++          card.innerHTML = `
++            <span class="pill">${escapeHtml(event.category)}</span>
++            <h2>${escapeHtml(event.title)}</h2>
++            <p>${escapeHtml(event.summary)}</p>
++            <p class="small">${escapeHtml(event.source)} · ${escapeHtml(event.published_at)}</p>
++            <a href="${escapeHtml(event.url)}" target="_blank" rel="noreferrer">Open full post →</a>
+           `;
+-          list.appendChild(article);
++          grid.appendChild(card);
+         });
+-      }
+-
+-      async function runSearch() {
+-        const q = queryInput.value.trim();
+-        if (!q) return;
+ 
+-        meta.textContent = 'Searching...';
+-        list.innerHTML = '';
+-        results.style.display = 'block';
++        const status = `${events.length} posts · last build ${payload.generated_at} · ${payload.elapsed_ms} ms`;
++        meta.textContent = status;
++      }
+ 
+-        const response = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+-        const raw = await response.text();
++      async function fetchEvents(force = false) {
++        meta.textContent = 'Refreshing events…';
+ 
+-        let payload;
+-        try {
+-          payload = JSON.parse(raw);
+-        } catch (_error) {
+-          throw new Error('Search failed: server returned invalid JSON.');
+-        }
++        const response = await fetch(`/api/events${force ? `?t=${Date.now()}` : ''}`);
++        const payload = await response.json();
+ 
+-        if (!response.ok) {
+-          throw new Error(payload.error || 'Search failed.');
+-        }
++        render(payload);
++        localStorage.setItem(STORAGE_KEY, String(Date.now()));
++      }
+ 
+-        renderResults(payload);
++      async function maybeDailyRefresh() {
++        const last = Number(localStorage.getItem(STORAGE_KEY) || 0);
++        const shouldRefresh = !last || Date.now() - last >= DAY_MS;
++        await fetchEvents(shouldRefresh);
+       }
+ 
+-      form.addEventListener('submit', async (event) => {
+-        event.preventDefault();
+-        try {
+-          await runSearch();
+-        } catch (error) {
++      refreshBtn.addEventListener('click', () => {
++        fetchEvents(true).catch((error) => {
+           meta.textContent = error.message;
+-          list.innerHTML = '';
+-        }
++        });
++      });
++
++      maybeDailyRefresh().catch((error) => {
++        meta.textContent = `Unable to load events: ${error.message}`;
+       });
+     </script>
+   </body>
+ </html>
